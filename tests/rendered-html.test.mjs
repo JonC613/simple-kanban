@@ -28,9 +28,10 @@ test("server-renders Simple Kanban", async () => {
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
-test("includes the requested TinySpec CRUD behavior", async () => {
-  const [page, packageJson] = await Promise.all([
+test("includes the requested LiteSpec CRUD behavior", async () => {
+  const [page, docsLibrary, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/DocsLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
@@ -39,11 +40,36 @@ test("includes the requested TinySpec CRUD behavior", async () => {
   assert.match(page, /window\.confirm/);
   assert.match(page, /Edit todo title/);
   assert.match(page, /clearDone/);
-  assert.match(page, /View TinySpec/);
-  assert.match(page, /\/tinyspec\.md/);
+  assert.match(page, /DocsLibrary/);
+  assert.match(page, /> Docs</);
+  assert.match(docsLibrary, /Nine source documents/);
+  assert.match(docsLibrary, /Raw Markdown/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 
-  await access(new URL("../public/tinyspec.md", import.meta.url));
-
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
+});
+
+test("publishes all nine canonical LiteSpec documents", async () => {
+  const documentPairs = [
+    ["../docs/litespec/README.md", "../public/docs/litespec/README.md"],
+    ["../docs/litespec/templates/spec.md", "../public/docs/litespec/templates/spec.md"],
+    ["../docs/litespec/templates/plan.md", "../public/docs/litespec/templates/plan.md"],
+    ["../docs/litespec/templates/tests.md", "../public/docs/litespec/templates/tests.md"],
+    ["../.litespec/simple-kanban/spec.md", "../public/docs/simple-kanban/spec.md"],
+    ["../.litespec/simple-kanban/plan.md", "../public/docs/simple-kanban/plan.md"],
+    ["../.litespec/simple-kanban/tests.md", "../public/docs/simple-kanban/tests.md"],
+    ["../.agents/skills/litespec/SKILL.md", "../public/docs/litespec/skill/SKILL.md"],
+    ["../.agents/skills/litespec/references/method.md", "../public/docs/litespec/skill/method.md"],
+  ];
+
+  const docsLibrary = await readFile(new URL("../app/DocsLibrary.tsx", import.meta.url), "utf8");
+  assert.equal((docsLibrary.match(/path: "\/docs\//g) ?? []).length, 9);
+
+  for (const [canonicalPath, publicPath] of documentPairs) {
+    const [canonical, published] = await Promise.all([
+      readFile(new URL(canonicalPath, import.meta.url), "utf8"),
+      readFile(new URL(publicPath, import.meta.url), "utf8"),
+    ]);
+    assert.equal(published, canonical, `${publicPath} must match its canonical source`);
+  }
 });
