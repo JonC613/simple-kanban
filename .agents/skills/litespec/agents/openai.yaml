@@ -1,0 +1,4 @@
+interface:
+  display_name: "LiteSpec"
+  short_description: "Guide lightweight specification-driven development"
+  default_prompt: "Use $litespec to guide this feature from discovery through approved specification, plan, and tests."
