@@ -39,7 +39,11 @@ test("includes the requested TinySpec CRUD behavior", async () => {
   assert.match(page, /window\.confirm/);
   assert.match(page, /Edit todo title/);
   assert.match(page, /clearDone/);
+  assert.match(page, /View TinySpec/);
+  assert.match(page, /\/tinyspec\.md/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+
+  await access(new URL("../public/tinyspec.md", import.meta.url));
 
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });

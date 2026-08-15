@@ -79,9 +79,18 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragTarget, setDragTarget] = useState<Status | null>(null);
+  const [showSpec, setShowSpec] = useState(false);
 
   useEffect(() => { setTodos(readTodos()); setReady(true) }, []);
   useEffect(() => { if (ready) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)) }, [ready, todos]);
+  useEffect(() => {
+    if (!showSpec) return;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setShowSpec(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [showSpec]);
 
   const grouped = useMemo(() => Object.fromEntries(columns.map((column) => [
     column.id, todos.filter((todo) => todo.status === column.id),
@@ -122,6 +131,7 @@ export default function Home() {
           <div className="summary" aria-label={`${todos.length} total todos, ${completed} completed`}>
             <strong>{todos.length}</strong><span>Total</span><i /><strong>{completed}</strong><span>Done</span>
           </div>
+          <button className="quiet-button" type="button" onClick={() => setShowSpec(true)}>View TinySpec</button>
           <button className="quiet-button" type="button" disabled={completed === 0} onClick={clearDone}>Clear done</button>
         </div>
       </header>
@@ -173,6 +183,40 @@ export default function Home() {
         <p><span className="status-dot" /> Saved in this browser</p>
         <p>Drag cards to move them · Select a title to edit</p>
       </footer>
+
+      {showSpec && (
+        <div className="spec-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setShowSpec(false);
+        }}>
+          <section className="spec-dialog" role="dialog" aria-modal="true" aria-labelledby="spec-title">
+            <header className="spec-dialog-header">
+              <div><p className="kicker">Build contract</p><h2 id="spec-title">TinySpec: Simple Kanban</h2></div>
+              <button className="spec-close" type="button" aria-label="Close TinySpec" onClick={() => setShowSpec(false)}>×</button>
+            </header>
+            <div className="spec-meta"><span>Status: done</span><span>Complexity: small</span><span>Storage: browser only</span></div>
+            <div className="spec-content">
+              <section><h3>What</h3><p>Build a clean, minimal todo app presented as a simple Kanban board. Users can create, read, edit, move, complete, and delete todos without an account or backend.</p></section>
+              <section><h3>Requirements</h3><ol>
+                <li>Display To Do, In Progress, and Done columns with item counts.</li>
+                <li>Add title-only todos from an input inside the To Do column.</li>
+                <li>Move cards between columns using drag and drop.</li>
+                <li>Edit a todo title inline; Enter saves and Escape cancels.</li>
+                <li>Require confirmation before deleting a card.</li>
+                <li>Allow clearing all Done cards after confirmation.</li>
+                <li>Persist todos in browser storage across page reloads.</li>
+                <li>Use a clean, minimal, responsive, and accessible interface.</li>
+                <li>Display a readable copy of this TinySpec in the app and provide the raw Markdown.</li>
+              </ol></section>
+              <section><h3>Done when</h3><ul>
+                <li>All CRUD operations work.</li><li>Drag and drop works across all three columns.</li>
+                <li>Todos survive a page reload in the same browser.</li><li>The board works on mobile and desktop.</li>
+                <li>The current TinySpec is readable here and available as Markdown.</li><li>The production build passes.</li>
+              </ul></section>
+            </div>
+            <a className="spec-source" href="/tinyspec.md" target="_blank" rel="noreferrer">Open raw Markdown ↗</a>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
